@@ -84,15 +84,66 @@ def plot_wave(
     cbar.set_label('Amplituda vlny')
     fig.show()
 
-    save_path = os.path.join(os.getcwd(), "tmp_wave.png") #current folder
-    fig.savefig(save_path)
+    if save_path is not None:
+        fig.savefig(save_path, dpi=300, bbox_inches='tight')
 
-
+    if show_figure:
+        plt.show()
+    else:
+        plt.close(fig)
 
     pass
 
 
 def generate_sinus(show_figure: bool = False, save_path: str | None = None):
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, sharey=True)
+
+    # Configure axes appearance
+    for ax in [ax1, ax2]:
+        ax.set_ylim(-1.5, 1.5)
+        ax.set_xlim(0, 4 * np.pi)
+        ax.tick_params(axis='y', labelsize=7)
+        ax.grid(True, linestyle='--', color='lightgray', linewidth=0.7)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+    # Set LaTeX formatted x-axis labels
+    x_ticks = np.linspace(0, 4*np.pi, 9)
+    x_labels = [
+        r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$",
+        r"$2\pi$", r"$\frac{5\pi}{2}$", r"$3\pi$", r"$\frac{7\pi}{2}$", r"$4\pi$"
+    ]
+    ax2.set_xticks(x_ticks)
+    ax2.set_xticklabels(x_labels,fontsize=7)
+
+    # Generate data
+    x = np.linspace(0, 4 * np.pi,1000)
+    sin_x = np.sin(x)
+    cos_x = np.cos(x)
+
+    # Subplot 1: Both functions with filled area between them
+    ax1.plot(x, sin_x,color='grey')
+    ax1.plot(x, cos_x,color='grey')
+    ax1.fill_between(x, sin_x, cos_x, where=cos_x > sin_x, color='green', alpha=0.2,interpolate=True)
+    ax1.fill_between(x, sin_x, cos_x, where=cos_x < sin_x, color='green', alpha=0.2,interpolate=True)
+
+    # Subplot 2: Maximum (colored by source) and minimum (dashed)
+    y_max = np.maximum(sin_x, cos_x)
+    y_min = np.minimum(sin_x, cos_x)
+
+    cos_is_max = cos_x > sin_x
+
+    ax2.plot(x, np.where(cos_is_max, y_max, np.nan), color='#ff7f0e')
+    ax2.plot(x, np.where(~cos_is_max, y_max, np.nan), color='#1f77b4') # default color
+    ax2.plot(x, y_min, color='gray', linestyle='--')
+
+    if save_path is not None:
+        fig.savefig(save_path, dpi=300, bbox_inches='tight')
+
+    if show_figure:
+        plt.show()
+    else:
+        plt.close()
     pass
 
 
@@ -100,10 +151,11 @@ def download_data() -> Dict[str, List[Any]]:
     pass
 
 
-if __name__ == "main":
+if __name__ == "__main__":
     X = np.linspace(-10, 10, 200)
     Y = np.linspace(-10, 10, 200)
     #A = wave_inference_bad(X, Y, np.array([[-3, 0], [3, 0], [0, 4]]), 2)
     B = wave_inference(X, Y, np.array([[-3, 0], [3, 0], [0, 4]]),2)
     plot_wave(B, X, Y, show_figure=True)
-    generate_sinus()
+    generate_sinus(show_figure=True)
+
